@@ -25,3 +25,26 @@ pre {
   border-radius: 6px;
   overflow-x: auto;
 }
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+button.active {
+  font-weight: bold;
+  outline: 2px solid currentColor;
+}
+
+input[type='checkbox'] {
+  width: auto;
+}
+
+label.inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
