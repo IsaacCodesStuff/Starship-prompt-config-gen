@@ -1,14 +1,45 @@
 <script lang="ts">
-  import { MODULES, defaultValues } from './lib/modules';
+  import { importToml } from './lib/importToml';
+  import { MODULES } from './lib/modules';
+  import { PRESETS } from './lib/presets';
   import Preview from './lib/Preview.svelte';
+  import { valuesFromHash, writeHash } from './lib/share';
   import { toToml } from './lib/toml';
 
   let failed = $state(false)
-  let values = $state(defaultValues())
+  let values = $state(valuesFromHash())
   let selectedId = $state(MODULES[0].id)
 
   let selected = $derived(MODULES.find((m) => m.id === selectedId)!)
   let toml = $derived(toToml(values))
+  let importText = $state('')
+  let importMessage = $state('')
+
+  function runImport(text: string) {
+    try {
+      const result = importToml(text)
+      values = result.values
+      const n = result.ignored.length
+      importMessage = n
+        ? `Imported. ${n} unsupported entries were skipped and will NOT appear in the exported TOML: ${result.ignored.slice(0, 8).join(', ')}${n > 8 ? ', …' : ''}`
+        : 'Imported.'
+    } catch (e) {
+      importMessage = `Could not parse that TOML: ${e instanceof Error ? e.message : e}`
+    }
+  }
+
+  function applyPreset(e: Event) {
+    const name = (e.currentTarget as HTMLSelectElement).value
+    const preset = PRESETS.find((p) => p.name === name)
+    if (preset) runImport(preset.toml)
+  }
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(location.href)
+  }
+
+  // Keep the URL in sync with the current config
+  $effect(() => writeHash(toml))
 
   async function copy() {
     await navigator.clipboard.writeText(toml)
@@ -51,6 +82,26 @@
         {/if}
       </label>
     {/each}
+  </section>
+
+  <section>
+    <h2>Presets & import</h2>
+    <label>
+      Preset
+      <select onchange={applyPreset}>
+        <option value="" selected disabled>Choose…</option>
+        {#each PRESETS as p}
+          <option value={p.name}>{p.name}</option>
+        {/each}
+      </select>
+    </label>
+    <label>
+      Import an existing starship.toml
+      <textarea rows="6" bind:value={importText}></textarea>
+    </label>
+    <button onclick={() => runImport(importText)}>Import</button>
+    <button onclick={copyLink}>Copy share link</button>
+    {#if importMessage}<p>{importMessage}</p>{/if}
   </section>
 
   <section>

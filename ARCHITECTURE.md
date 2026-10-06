@@ -9,3 +9,4 @@ Stack: Vite + Svelte 5 (runes) + TypeScript. Client-only, no backend.
 - State lives in App.svelte for now; extract to a store only when needed.
 - Keep components small and single-purpose. Run `npm run check` before committing.
 - Preview renderers live in src/lib/render.ts, one small function per module id. A module with no renderer simply doesn't appear in the preview.
+- Presets, import and share links all go through importToml(). The importer never silently drops unknown keys; it reports them.

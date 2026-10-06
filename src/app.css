@@ -48,3 +48,13 @@ label.inline {
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
+
+textarea,
+select {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.25rem;
+  padding: 0.4rem;
+  font-family: ui-monospace, monospace;
+}

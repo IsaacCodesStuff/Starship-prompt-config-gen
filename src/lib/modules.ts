@@ -14,16 +14,6 @@ export const MODULES: ModuleDef[] = [
     ],
   },
   {
-    id: 'nodejs',
-    name: 'Node.js',
-    description: 'Nothing much',
-    options: [
-        { key: 'symbol', label: 'Symbol', type: 'string', default: '\ue718 ' },
-        { key: 'style', label: 'Style', type: 'string', default: 'bold green' },
-        { key: 'disabled', label: 'Disabled', type: 'boolean', default: false },
-    ],
-  },
-  {
     id: 'directory',
     name: 'Directory',
     description: 'The current working directory.',

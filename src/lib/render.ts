@@ -62,15 +62,6 @@ const RENDERERS: Record<string, Renderer> = {
     const path = [root, ...parts].filter(Boolean).join('/')
     return [{ text: path, style: o.style }, { text: ' ', style: '' }]
   },
-
-    nodejs: (o) =>
-    o.disabled
-        ? []
-        : [
-            { text: 'via ', style: '' },
-            { text: `${o.symbol}${SAMPLE.nodeVersion}`, style: o.style },
-            { text: ' ', style: '' },
-        ],
       
   git_branch: (o) =>
     o.disabled
@@ -108,7 +99,7 @@ const RENDERERS: Record<string, Renderer> = {
 }
 
 // Which modules appear, in order. 'newline' starts a new prompt line.
-const PROMPT_ORDER = ['directory', 'git_branch', 'nodejs', 'cmd_duration', 'newline', 'time', 'character']
+const PROMPT_ORDER = ['directory', 'git_branch', 'cmd_duration', 'newline', 'time', 'character']
 
 export function renderPrompt(values: ConfigValues, ctx: PreviewContext): Segment[][] {
   const lines: Segment[][] = [[]]
