@@ -3,9 +3,8 @@
   import type { ConfigValues } from './schema';
   import { styleToCss } from './style';
 
-  let { values, failed }: { values: ConfigValues; failed: boolean } = $props()
-
-  let lines = $derived(renderPrompt(values, { lastCommandFailed: failed }))
+  let { values, failed, isRoot }: { values: ConfigValues; failed: boolean; isRoot: boolean } = $props()
+let lines = $derived(renderPrompt(values, { lastCommandFailed: failed, isRoot }))
 </script>
 
 <pre class="terminal">{#each lines as line, i}{#each line as seg}<span style={styleToCss(seg.style)}>{seg.text}</span>{/each}{#if i < lines.length - 1}{'\n'}{/if}{/each}</pre>

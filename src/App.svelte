@@ -16,6 +16,7 @@
   let toml = $derived(toToml(values, raw))
   let importText = $state('')
   let importMessage = $state('')
+  let isRoot = $state(false)
 
   function runImport(text: string) {
     try {
@@ -54,11 +55,15 @@
 
   <section>
     <h2>Preview</h2>
-    <Preview {values} {failed} />
-    <label class="inline">
-      <input type="checkbox" bind:checked={failed} />
-      Pretend the last command failed
-    </label>
+    <Preview {values} {failed} {isRoot} />
+      <label class="inline">
+        <input type="checkbox" bind:checked={failed} />
+        Pretend the last command failed
+      </label>
+      <label class="inline">
+        <input type="checkbox" bind:checked={isRoot} />
+        Pretend you're root
+      </label>
   </section>
 
   <nav>

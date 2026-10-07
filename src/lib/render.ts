@@ -7,17 +7,30 @@ export interface Segment {
 }
 export interface PreviewContext {
   lastCommandFailed: boolean
+  isRoot: boolean
 }
 type Renderer = (o: Record<string, any>, ctx: PreviewContext) => Segment[] // eslint-disable-line @typescript-eslint/no-explicit-any
 
 // Fake environment the preview pretends to be in.
 const SAMPLE = {
   homeRelativePath: ['dev', 'starship-generator', 'src', 'lib'],
-  repoRootIndex: 1, // 'starship-generator'
+  repoRootIndex: 1,
   branch: 'main',
-  nodeVersion: 'v20.11.0',
   durationMs: 5234,
   jobCount: 2,
+  user: 'isaac',
+  gitAdded: 42,
+  gitDeleted: 7,
+  gitAhead: 2,
+  gitBehind: 0,
+  gitStaged: 1,
+  gitModified: 3,
+  gitUntracked: 1,
+  gitConflicted: 0,
+  gitStashed: 0,
+  gitRenamed: 0,
+  gitDeleted2: 0, // deleted *files*, distinct from gitDeleted (lines removed)
+  batteryPct: 64,
 }
 
 // Parses Starship markup like "[text](bold green) plain" into segments.
@@ -46,6 +59,13 @@ function formatTime(fmt: string, d: Date): string {
     .replace(/%M/g, p(d.getMinutes()))
     .replace(/%S/g, p(d.getSeconds()))
     .replace(/%p/g, d.getHours() < 12 ? 'AM' : 'PM')
+}
+
+// Fills "${count}" / "${ahead_count}" etc. inside a git_status sub-format,
+// then runs the result through parseMarkup so any [text](style) still colors.
+function fillCount(template: string, vars: Record<string, number>): Segment[] {
+  const filled = template.replace(/\$\{?(\w+)\}?/g, (_, key) => String(vars[key] ?? ''))
+  return parseMarkup(filled)
 }
 
 const RENDERERS: Record<string, Renderer> = {
@@ -91,6 +111,56 @@ const RENDERERS: Record<string, Renderer> = {
       { text: ' ', style: '' },
     ]
   },
+
+    username: (o, ctx) => {
+    if (o.disabled) return []
+    if (!o.show_always && !ctx.isRoot) return []
+    const style = ctx.isRoot ? o.style_root : o.style_user
+    const text = (o.format as string).replace('$user', SAMPLE.user)
+    return [...parseMarkup(`[${text}](${style})`)]
+  },
+
+  git_metrics: (o) => {
+    if (o.disabled) return []
+    return [
+      ...fillCount(`[▴${SAMPLE.gitAdded}](${o.added_style})`, {}),
+      ...fillCount(`[▿${SAMPLE.gitDeleted}](${o.deleted_style})`, {}),
+      { text: ' ', style: '' },
+    ]
+  },
+
+  git_status: (o) => {
+    if (o.disabled) return []
+    const counts = {
+      count: SAMPLE.gitModified,
+      ahead_count: SAMPLE.gitAhead,
+      behind_count: SAMPLE.gitBehind,
+    }
+    const parts: Segment[] = []
+    const add = (tpl: string, count: number, countKey = 'count') => {
+      if (count > 0) parts.push(...fillCount(tpl, { ...counts, [countKey]: count }))
+    }
+    if (SAMPLE.gitAhead > 0 && SAMPLE.gitBehind > 0) add(o.diverged, 1)
+    else if (SAMPLE.gitAhead > 0) add(o.ahead, SAMPLE.gitAhead)
+    else if (SAMPLE.gitBehind > 0) add(o.behind, SAMPLE.gitBehind)
+    add(o.staged, SAMPLE.gitStaged)
+    add(o.modified, SAMPLE.gitModified)
+    add(o.untracked, SAMPLE.gitUntracked)
+    add(o.conflicted, SAMPLE.gitConflicted)
+    add(o.stashed, SAMPLE.gitStashed)
+    add(o.renamed, SAMPLE.gitRenamed)
+    if (!parts.length) return []
+    return [{ text: '(', style: o.style }, ...parts, { text: ') ', style: o.style }]
+  },
+
+  battery: (o) => {
+    if (o.disabled) return []
+    const symbol =
+      SAMPLE.batteryPct > 90 ? o.full_symbol : SAMPLE.batteryPct < 10 ? o.empty_symbol : o.discharging_symbol
+    // Threshold-based color styling isn't modeled yet; this always uses a neutral style.
+    return [{ text: `${SAMPLE.batteryPct}% ${symbol}`, style: '' }, { text: ' ', style: '' }]
+  },
+
   ...Object.fromEntries(LANGUAGES.map((l) => [l.id, languageRenderer(l.prefix, l.sampleVersion)])),
 
   time: (o) =>
@@ -121,11 +191,15 @@ function languageRenderer(prefix: string, sampleVersion: string): Renderer {
 
 // Which modules appear, in order. 'newline' starts a new prompt line.
 const PROMPT_ORDER = [
+  'username',
   'jobs',
   'directory',
   'git_branch',
+  'git_status',
+  'git_metrics',
   'cmd_duration',
   ...LANGUAGES.map((l) => l.id),
+  'battery',
   'newline',
   'time',
   'character',
