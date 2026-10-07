@@ -11,7 +11,13 @@
 <pre class="terminal">{#each lines as line, i}{#each line as seg}<span style={styleToCss(seg.style)}>{seg.text}</span>{/each}{#if i < lines.length - 1}{'\n'}{/if}{/each}</pre>
 
 <style>
+  @font-face {
+    font-family: 'PreviewNerdFont';
+    src: url('https://cdn.jsdelivr.net/gh/ryanoasis/nerd-fonts@master/patched-fonts/JetBrainsMono/Ligatures/Regular/JetBrainsMonoNerdFontPropo-Regular.ttf');
+    font-display: swap;
+  }
   .terminal {
+  font-family: 'PreviewNerdFont', ui-monospace, monospace;
     --term-bg: #1b1e23;
     --term-fg: #d0d7de;
     background: var(--term-bg);

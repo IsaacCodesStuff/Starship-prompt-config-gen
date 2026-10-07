@@ -1,5 +1,17 @@
-import type { ConfigValues, ModuleDef } from './schema'
+import { LANGUAGES } from './languages';
+import type { ConfigValues, ModuleDef } from './schema';
 
+  function languageModule({ id, name }: { id: string; name: string }): ModuleDef {
+    return {
+      id,
+      name,
+      description: `Shows the detected ${name} version.`,
+      options: [
+        { key: 'style', label: 'Style', type: 'string', default: 'bold green' },
+        { key: 'disabled', label: 'Disabled', type: 'boolean', default: false },
+      ],
+    }
+  }
 // NOTE: defaults here are from memory and should be verified against
 // the Starship docs. Later we'll generate this file from the docs.
 export const MODULES: ModuleDef[] = [
@@ -47,6 +59,19 @@ export const MODULES: ModuleDef[] = [
       { key: 'disabled', label: 'Disabled', type: 'boolean', default: false },
     ],
   },
+    {
+    id: 'jobs',
+    name: 'Jobs',
+    description: 'Number of background jobs running.',
+    options: [
+      // Starship default symbol/threshold recalled from memory — worth checking against the docs.
+      { key: 'symbol', label: 'Symbol', type: 'string', default: '✦' },
+      { key: 'threshold', label: 'Show when job count is at least', type: 'number', default: 1 },
+      { key: 'style', label: 'Style', type: 'string', default: 'bold blue' },
+      { key: 'disabled', label: 'Disabled', type: 'boolean', default: false },
+    ],
+  },
+  ...LANGUAGES.map(languageModule),
   {
     id: 'time',
     name: 'Time',

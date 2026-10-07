@@ -3,15 +3,17 @@
   import { MODULES } from './lib/modules';
   import { PRESETS } from './lib/presets';
   import Preview from './lib/Preview.svelte';
-  import { valuesFromHash, writeHash } from './lib/share';
+  import { fromHash, writeHash } from './lib/share';
   import { toToml } from './lib/toml';
 
+  const initial = fromHash()
+  let values = $state(initial.values)
+  let raw = $state(initial.raw)
   let failed = $state(false)
-  let values = $state(valuesFromHash())
   let selectedId = $state(MODULES[0].id)
 
   let selected = $derived(MODULES.find((m) => m.id === selectedId)!)
-  let toml = $derived(toToml(values))
+  let toml = $derived(toToml(values, raw))
   let importText = $state('')
   let importMessage = $state('')
 
@@ -19,9 +21,10 @@
     try {
       const result = importToml(text)
       values = result.values
+      raw = result.raw
       const n = result.ignored.length
       importMessage = n
-        ? `Imported. ${n} unsupported entries were skipped and will NOT appear in the exported TOML: ${result.ignored.slice(0, 8).join(', ')}${n > 8 ? ', …' : ''}`
+        ? `Imported. ${n} entries don't have editable controls yet but will still round-trip into the output: ${result.ignored.slice(0, 8).join(', ')}${n > 8 ? ', …' : ''}`
         : 'Imported.'
     } catch (e) {
       importMessage = `Could not parse that TOML: ${e instanceof Error ? e.message : e}`

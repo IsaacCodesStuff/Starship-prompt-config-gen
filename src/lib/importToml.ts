@@ -1,31 +1,40 @@
 import { parse } from 'smol-toml'
 import { MODULES, defaultValues } from './modules'
-import type { ConfigValues } from './schema'
+import type { ConfigValues, RawToml } from './schema'
 
 export interface ImportResult {
   values: ConfigValues
-  ignored: string[] // things we found but don't support yet
+  raw: RawToml
+  ignored: string[] // human-readable list, for the status message only
 }
 
-// Throws if the text isn't valid TOML; callers should catch.
 export function importToml(text: string): ImportResult {
-  const parsed = parse(text) as Record<string, unknown>
+  const parsed = parse(text) as RawToml
   const values = defaultValues()
+  const raw: RawToml = structuredClone(parsed)
   const ignored: string[] = []
 
   for (const [key, val] of Object.entries(parsed)) {
     const mod = MODULES.find((m) => m.id === key)
     const isTable = typeof val === 'object' && val !== null && !Array.isArray(val)
     if (!mod || !isTable) {
-      ignored.push(key)
+      if (!mod) ignored.push(key)
       continue
     }
-    for (const [optKey, optVal] of Object.entries(val as Record<string, unknown>)) {
-      const opt = mod.options.find((o) => o.key === optKey)
-      // typeof gives 'string' | 'number' | 'boolean', which matches our OptionType names
-      if (opt && typeof optVal === opt.type) values[mod.id][optKey] = optVal
-      else ignored.push(`${key}.${optKey}`)
+
+    const rawTable = { ...(val as Record<string, unknown>) }
+    for (const opt of mod.options) {
+      const optVal = rawTable[opt.key]
+      if (optVal !== undefined && typeof optVal === opt.type) {
+        values[mod.id][opt.key] = optVal
+        delete rawTable[opt.key] // claimed by a known option; don't duplicate it in raw
+      } else if (optVal !== undefined) {
+        ignored.push(`${key}.${opt.key}`)
+      }
     }
+    // Leftover keys on a known module (e.g. an option we haven't modeled) stay in raw[key]
+    if (Object.keys(rawTable).length) raw[key] = rawTable
+    else delete raw[key]
   }
-  return { values, ignored }
+  return { values, raw, ignored }
 }

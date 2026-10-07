@@ -8,12 +8,15 @@ export interface OptionDef {
 }
 
 export interface ModuleDef {
-  id: string // the TOML table name, e.g. "git_branch"
+  id: string
   name: string
   description: string
   options: OptionDef[]
 }
 
-// Deliberately loose: option values mix strings, booleans and numbers.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ConfigValues = Record<string, Record<string, any>>
+
+// Whatever importToml couldn't map to a known module/option, kept verbatim.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type RawToml = Record<string, any>

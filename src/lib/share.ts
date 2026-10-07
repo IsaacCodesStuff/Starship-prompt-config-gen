@@ -1,15 +1,15 @@
-import { importToml } from './importToml'
-import { defaultValues } from './modules'
-import type { ConfigValues } from './schema'
+import { importToml } from './importToml';
+import { defaultValues } from './modules';
+import type { ConfigValues, RawToml } from './schema';
 
-// The URL hash looks like  #c=<url-encoded TOML>
-export function valuesFromHash(): ConfigValues {
+export function fromHash(): { values: ConfigValues; raw: RawToml } {
   const m = location.hash.match(/^#c=(.*)$/)
-  if (!m) return defaultValues()
+  if (!m) return { values: defaultValues(), raw: {} }
   try {
-    return importToml(decodeURIComponent(m[1])).values
+    const { values, raw } = importToml(decodeURIComponent(m[1]))
+    return { values, raw }
   } catch {
-    return defaultValues() // a broken link shouldn't break the site
+    return { values: defaultValues(), raw: {} }
   }
 }
 

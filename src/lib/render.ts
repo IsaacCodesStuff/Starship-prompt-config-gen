@@ -1,3 +1,4 @@
+import { LANGUAGES } from './languages'
 import type { ConfigValues } from './schema'
 
 export interface Segment {
@@ -16,6 +17,7 @@ const SAMPLE = {
   branch: 'main',
   nodeVersion: 'v20.11.0',
   durationMs: 5234,
+  jobCount: 2,
 }
 
 // Parses Starship markup like "[text](bold green) plain" into segments.
@@ -82,6 +84,14 @@ const RENDERERS: Record<string, Renderer> = {
       { text: ' ', style: '' },
     ]
   },
+  jobs: (o) => {
+    if (o.disabled || SAMPLE.jobCount < o.threshold) return []
+    return [
+      { text: `${o.symbol}${SAMPLE.jobCount}`, style: o.style },
+      { text: ' ', style: '' },
+    ]
+  },
+  ...Object.fromEntries(LANGUAGES.map((l) => [l.id, languageRenderer(l.prefix, l.sampleVersion)])),
 
   time: (o) =>
     o.disabled
@@ -98,8 +108,28 @@ const RENDERERS: Record<string, Renderer> = {
       : [...parseMarkup(ctx.lastCommandFailed ? o.error_symbol : o.success_symbol), { text: ' ', style: '' }],
 }
 
+function languageRenderer(prefix: string, sampleVersion: string): Renderer {
+  return (o) =>
+    o.disabled
+      ? []
+      : [
+          { text: `${prefix} `, style: '' },
+          { text: sampleVersion, style: o.style },
+          { text: ' ', style: '' },
+        ]
+}
+
 // Which modules appear, in order. 'newline' starts a new prompt line.
-const PROMPT_ORDER = ['directory', 'git_branch', 'cmd_duration', 'newline', 'time', 'character']
+const PROMPT_ORDER = [
+  'jobs',
+  'directory',
+  'git_branch',
+  'cmd_duration',
+  ...LANGUAGES.map((l) => l.id),
+  'newline',
+  'time',
+  'character',
+]
 
 export function renderPrompt(values: ConfigValues, ctx: PreviewContext): Segment[][] {
   const lines: Segment[][] = [[]]
