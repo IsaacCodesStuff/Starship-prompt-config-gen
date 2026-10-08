@@ -1,15 +1,30 @@
-import { importToml } from './importToml';
-import { defaultValues } from './modules';
-import type { ConfigValues, RawToml } from './schema';
+import { DEFAULT_LAYOUT, type PromptLayout } from './formatParser'
+import { importToml } from './importToml'
+import { DEFAULT_PROMPT_SETTINGS, defaultValues } from './modules'
+import type { ConfigValues, PromptSettings, RawToml } from './schema'
 
-export function fromHash(): { values: ConfigValues; raw: RawToml } {
+export interface HashState {
+  values: ConfigValues
+  raw: RawToml
+  layout: PromptLayout
+  promptSettings: PromptSettings
+}
+
+const EMPTY_STATE: HashState = {
+  values: defaultValues(),
+  raw: {},
+  layout: DEFAULT_LAYOUT,
+  promptSettings: DEFAULT_PROMPT_SETTINGS,
+}
+
+export function fromHash(): HashState {
   const m = location.hash.match(/^#c=(.*)$/)
-  if (!m) return { values: defaultValues(), raw: {} }
+  if (!m) return EMPTY_STATE
   try {
-    const { values, raw } = importToml(decodeURIComponent(m[1]))
-    return { values, raw }
+    const { values, raw, layout, promptSettings } = importToml(decodeURIComponent(m[1]))
+    return { values, raw, layout, promptSettings }
   } catch {
-    return { values: defaultValues(), raw: {} }
+    return EMPTY_STATE
   }
 }
 

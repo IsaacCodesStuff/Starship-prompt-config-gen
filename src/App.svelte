@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { DEFAULT_LAYOUT, type PromptLayout } from './lib/formatParser';
   import { importToml } from './lib/importToml';
   import { MODULES } from './lib/modules';
   import { PRESETS } from './lib/presets';
   import Preview from './lib/Preview.svelte';
+  import type { PromptSettings } from './lib/schema';
   import { fromHash, writeHash } from './lib/share';
   import { toToml } from './lib/toml';
 
@@ -13,16 +15,20 @@
   let selectedId = $state(MODULES[0].id)
 
   let selected = $derived(MODULES.find((m) => m.id === selectedId)!)
-  let toml = $derived(toToml(values, raw))
+  let promptSettings = $state<PromptSettings>(initial.promptSettings)
+  let toml = $derived(toToml(values, raw, promptSettings))
   let importText = $state('')
   let importMessage = $state('')
   let isRoot = $state(false)
+  let layout = $state<PromptLayout>(initial.layout ?? DEFAULT_LAYOUT)
 
   function runImport(text: string) {
     try {
       const result = importToml(text)
       values = result.values
       raw = result.raw
+      promptSettings = result.promptSettings
+      layout = result.layout
       const n = result.ignored.length
       importMessage = n
         ? `Imported. ${n} entries don't have editable controls yet but will still round-trip into the output: ${result.ignored.slice(0, 8).join(', ')}${n > 8 ? ', …' : ''}`
@@ -55,7 +61,7 @@
 
   <section>
     <h2>Preview</h2>
-    <Preview {values} {failed} {isRoot} />
+    <Preview {values} {failed} {isRoot} {layout} />
       <label class="inline">
         <input type="checkbox" bind:checked={failed} />
         Pretend the last command failed
@@ -110,6 +116,18 @@
     <button onclick={() => runImport(importText)}>Import</button>
     <button onclick={copyLink}>Copy share link</button>
     {#if importMessage}<p>{importMessage}</p>{/if}
+  </section>
+
+  <section>
+    <h2>Prompt settings</h2>
+    <label class="inline">
+      <input type="checkbox" bind:checked={promptSettings.add_newline} />
+      Blank line before each prompt
+    </label>
+    <label>
+      Continuation prompt
+      <input bind:value={promptSettings.continuation_prompt} />
+    </label>
   </section>
 
   <section>

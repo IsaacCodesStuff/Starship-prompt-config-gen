@@ -1,5 +1,26 @@
+import { DEFAULT_LAYOUT, type PromptLayout } from './formatParser'
 import { LANGUAGES } from './languages'
 import type { ConfigValues } from './schema'
+
+function renderLine(ids: string[], values: ConfigValues, ctx: PreviewContext): Segment[] {
+  const segs: Segment[] = []
+  for (const id of ids) {
+    const render = RENDERERS[id]
+    if (render && values[id]) segs.push(...render(values[id], ctx))
+  }
+  return segs
+}
+
+export function renderPrompt(
+  values: ConfigValues,
+  ctx: PreviewContext,
+  layout: PromptLayout = DEFAULT_LAYOUT,
+): { left: Segment[][]; right: Segment[][] } {
+  return {
+    left: layout.left.map((line) => renderLine(line, values, ctx)),
+    right: layout.right.map((line) => renderLine(line, values, ctx)),
+  }
+}
 
 export interface Segment {
   text: string
@@ -187,33 +208,4 @@ function languageRenderer(prefix: string, sampleVersion: string): Renderer {
           { text: sampleVersion, style: o.style },
           { text: ' ', style: '' },
         ]
-}
-
-// Which modules appear, in order. 'newline' starts a new prompt line.
-const PROMPT_ORDER = [
-  'username',
-  'jobs',
-  'directory',
-  'git_branch',
-  'git_status',
-  'git_metrics',
-  'cmd_duration',
-  ...LANGUAGES.map((l) => l.id),
-  'battery',
-  'newline',
-  'time',
-  'character',
-]
-
-export function renderPrompt(values: ConfigValues, ctx: PreviewContext): Segment[][] {
-  const lines: Segment[][] = [[]]
-  for (const id of PROMPT_ORDER) {
-    if (id === 'newline') {
-      lines.push([])
-      continue
-    }
-    const render = RENDERERS[id]
-    if (render && values[id]) lines[lines.length - 1].push(...render(values[id], ctx))
-  }
-  return lines
 }

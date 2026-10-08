@@ -1,17 +1,17 @@
-import { MODULES } from './modules'
-import type { ConfigValues, RawToml } from './schema'
+import { DEFAULT_PROMPT_SETTINGS, MODULES } from './modules'
+import type { ConfigValues, PromptSettings, RawToml } from './schema'
 
-const fmt = (v: unknown): string => {
-  if (typeof v === 'string') return JSON.stringify(v)
-  if (Array.isArray(v)) return `[${v.map(fmt).join(', ')}]`
-  return String(v)
-}
+export function toToml(
+  values: ConfigValues,
+  raw: RawToml = {},
+  promptSettings: PromptSettings = DEFAULT_PROMPT_SETTINGS,
+): string {
+  const topLevel: string[] = []
+  if (promptSettings.add_newline !== DEFAULT_PROMPT_SETTINGS.add_newline)
+    topLevel.push(`add_newline = ${promptSettings.add_newline}`)
+  if (promptSettings.continuation_prompt !== DEFAULT_PROMPT_SETTINGS.continuation_prompt)
+    topLevel.push(`continuation_prompt = ${fmt(promptSettings.continuation_prompt)}`)
 
-function tableBlock(id: string, entries: [string, unknown][]): string {
-  return `[${id}]\n${entries.map(([k, v]) => `${k} = ${fmt(v)}`).join('\n')}`
-}
-
-export function toToml(values: ConfigValues, raw: RawToml = {}): string {
   const blocks: string[] = []
   const handled = new Set<string>()
 
@@ -36,5 +36,15 @@ export function toToml(values: ConfigValues, raw: RawToml = {}): string {
     }
   }
 
-  return blocks.length ? blocks.join('\n\n') + '\n' : '# Everything is at Starship defaults\n'
+  const result = [...(topLevel.length ? [topLevel.join('\n')] : []), ...blocks]
+  return result.length ? result.join('\n\n') + '\n' : '# Everything is at Starship defaults\n'
+}
+const fmt = (v: unknown): string => {
+  if (typeof v === 'string') return JSON.stringify(v)
+  if (Array.isArray(v)) return `[${v.map(fmt).join(', ')}]`
+  return String(v)
+}
+
+function tableBlock(id: string, entries: [string, unknown][]): string {
+  return `[${id}]\n${entries.map(([k, v]) => `${k} = ${fmt(v)}`).join('\n')}`
 }

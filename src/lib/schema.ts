@@ -14,6 +14,11 @@ export interface ModuleDef {
   options: OptionDef[]
 }
 
+export interface PromptSettings {
+  add_newline: boolean
+  continuation_prompt: string
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ConfigValues = Record<string, Record<string, any>>
 

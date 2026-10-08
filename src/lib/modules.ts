@@ -1,5 +1,5 @@
 import { LANGUAGES } from './languages';
-import type { ConfigValues, ModuleDef } from './schema';
+import type { ConfigValues, ModuleDef, PromptSettings } from './schema';
 
   function languageModule({ id, name }: { id: string; name: string }): ModuleDef {
     return {
@@ -139,6 +139,10 @@ export const MODULES: ModuleDef[] = [
   },
 ]
 
+export const DEFAULT_PROMPT_SETTINGS: PromptSettings = {
+  add_newline: true,
+  continuation_prompt: '[∙] ',
+}
 export function defaultValues(): ConfigValues {
   const values: ConfigValues = {}
   for (const mod of MODULES) {
